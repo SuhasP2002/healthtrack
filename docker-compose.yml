@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: healthtrack-db
+    environment:
+      POSTGRES_DB: healthtrack_db
+      POSTGRES_USER: healthtrack_user
+      POSTGRES_PASSWORD: healthtrack_pass
+    ports:
+      - "5433:5432"   # Using 5433 externally to avoid conflict with local PostgreSQL
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U healthtrack_user -d healthtrack_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: healthtrack-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/healthtrack_db
+      SPRING_DATASOURCE_USERNAME: healthtrack_user
+      SPRING_DATASOURCE_PASSWORD: healthtrack_pass
+      APP_JWT_SECRET: healthtrack-super-secret-jwt-key-2024-production-value
+      APP_JWT_EXPIRATION: 86400000
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:3000
+      APP_FRONTEND_URL: http://localhost:3000
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: YOUR_GMAIL@gmail.com
+      SPRING_MAIL_PASSWORD: YOUR_APP_PASSWORD
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: healthtrack-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
