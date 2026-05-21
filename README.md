@@ -1,5 +1,7 @@
 # 💚 HealthTrack — Habit Tracking App
 
+🌐 **Live Demo**: https://cozy-reprieve-production-3742.up.railway.app
+
 > A full-stack habit tracking application with analytics, reminders, weekly email reports, and PDF export.
 
 ![Tech Stack](https://img.shields.io/badge/React-18-blue?logo=react)
