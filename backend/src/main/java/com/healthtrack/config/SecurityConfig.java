@@ -44,7 +44,7 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())  // Disabled because we use JWT, not sessions
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()  // Login & Register are public
+                .requestMatchers("/api/auth/**", "/error").permitAll()  // Login & Register are public
                 .anyRequest().authenticated()                  // Everything else needs JWT
             )
             .sessionManagement(session -> session
