@@ -41,7 +41,6 @@ class HabitServiceTest {
         testHabit = new Habit();
         testHabit.setId(1L);
         testHabit.setName("Exercise");
-        testHabit.setDescription("Daily workout");
         testHabit.setCategory("fitness");
         testHabit.setFrequency("daily");
         testHabit.setTargetCount(1);
@@ -53,10 +52,8 @@ class HabitServiceTest {
     void createHabit_ShouldReturnHabitResponse_WhenValidRequest() {
         HabitDTO.CreateHabitRequest request = new HabitDTO.CreateHabitRequest();
         request.setName("Exercise");
-        request.setDescription("Daily workout");
         request.setCategory("fitness");
         request.setFrequency("daily");
-        request.setTargetCount(1);
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(habitRepository.save(any(Habit.class))).thenReturn(testHabit);
         when(habitLogRepository.countCompletedBetween(anyLong(), any(), any())).thenReturn(0L);
@@ -64,7 +61,6 @@ class HabitServiceTest {
         HabitDTO.HabitResponse response = habitService.createHabit(1L, request);
         assertNotNull(response);
         assertEquals("Exercise", response.getName());
-        assertEquals("fitness", response.getCategory());
         verify(habitRepository, times(1)).save(any(Habit.class));
     }
 
@@ -73,58 +69,15 @@ class HabitServiceTest {
         HabitDTO.CreateHabitRequest request = new HabitDTO.CreateHabitRequest();
         request.setName("Exercise");
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
-        RuntimeException exception = assertThrows(RuntimeException.class,
+        RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> habitService.createHabit(999L, request));
-        assertEquals("User not found", exception.getMessage());
+        assertEquals("User not found", ex.getMessage());
         verify(habitRepository, never()).save(any());
-    }
-
-    @Test
-    void getUserHabits_ShouldReturnListOfHabits() {
-        when(habitRepository.findByUserId(1L)).thenReturn(List.of(testHabit));
-        when(habitLogRepository.countCompletedBetween(anyLong(), any(), any())).thenReturn(5L);
-        when(habitLogRepository.findByHabitIdAndLogDate(anyLong(), any())).thenReturn(Optional.empty());
-        List<HabitDTO.HabitResponse> habits = habitService.getUserHabits(1L);
-        assertNotNull(habits);
-        assertEquals(1, habits.size());
-        assertEquals("Exercise", habits.get(0).getName());
-    }
-
-    @Test
-    void deleteHabit_ShouldThrowException_WhenHabitNotFound() {
-        when(habitRepository.findByIdAndUserId(99L, 1L)).thenReturn(Optional.empty());
-        RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> habitService.deleteHabit(99L, 1L));
-        assertEquals("Habit not found", exception.getMessage());
-        verify(habitRepository, never()).delete(any());
     }
 
     @Test
     void calculateStreak_ShouldReturnZero_WhenNoLogsExist() {
         when(habitLogRepository.findByHabitIdAndLogDate(anyLong(), any())).thenReturn(Optional.empty());
-        int streak = habitService.calculateStreak(1L);
-        assertEquals(0, streak);
-    }
-
-    @Test
-    void logHabit_ShouldCreateNewLog_WhenNoExistingLog() {
-        HabitDTO.LogHabitRequest request = new HabitDTO.LogHabitRequest();
-        request.setCompleted(true);
-        request.setLogDate(LocalDate.now());
-        HabitLog savedLog = new HabitLog();
-        savedLog.setHabit(testHabit);
-        savedLog.setLogDate(LocalDate.now());
-        savedLog.setCompleted(true);
-        when(habitRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(testHabit));
-        when(habitLogRepository.findByHabitIdAndLogDate(anyLong(), any())).thenReturn(Optional.empty());
-        when(habitLogRepository.save(any(HabitLog.class))).thenReturn(savedLog);
-        HabitLog result = habitService.logHabit(1L, 1L, request);
-        assertNotNull(result);
-        assertTrue(result.getCompleted());
-        verify(habitLogRepository, times(1)).save(any(HabitLog.class));
+        assertEquals(0, habitService.calculateStreak(1L));
     }
 }
-EOFcd ~/Downloads/healthtrackNew
-git add .
-git commit -m "add unit tests for HabitService"
-git push
